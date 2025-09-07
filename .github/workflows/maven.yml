@@ -1,0 +1,85 @@
+name: Java CI with Maven (MySQL + Redis)
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/leave_managment?useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 03@March$2025
+      SPRING_REDIS_HOST: 127.0.0.1
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: ''
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: 03@March$2025
+          MYSQL_DATABASE: leave_managment
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -P 3306 --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=30
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Install MySQL & Redis clients
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y default-mysql-client redis-tools netcat-openbsd
+
+      - name: Wait for MySQL to be ready
+        run: |
+          echo "Waiting for MySQL..."
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -P 3306 -u root -p"$SPRING_DATASOURCE_PASSWORD" --silent; then
+              echo "✅ MySQL is up"
+              break
+            fi
+            echo "MySQL not ready yet... ($i)"
+            sleep 2
+          done
+
+      - name: Wait for Redis to be ready
+        run: |
+          echo "Waiting for Redis..."
+          for i in {1..30}; do
+            if redis-cli -h 127.0.0.1 -p 6379 ping | grep -q PONG; then
+              echo "✅ Redis is up"
+              break
+            fi
+            echo "Redis not ready yet... ($i)"
+            sleep 1
+          done
+
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
