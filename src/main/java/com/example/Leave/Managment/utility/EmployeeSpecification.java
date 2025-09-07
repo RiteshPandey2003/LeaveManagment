@@ -12,31 +12,28 @@ public class EmployeeSpecification {
                 name == null ? null : cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%");
     }
 
-    public static  Specification<Employee> hasEmail(String email){
+    public static Specification<Employee> hasEmail(String email){
         return (root, query, cb) ->
-                email == null ? null : cb.like(cb.lower(root.get("name")), "%" + email.toLowerCase() +"%");
+                email == null ? null : cb.like(cb.lower(root.get("email")), "%" + email.toLowerCase() +"%");
     }
 
-    public static  Specification<Employee> hasDepartment(String department){
+    public static Specification<Employee> hasDepartment(String department){
         return (root, query, cb) ->
                 department == null ? null : cb.equal(root.get("department"), department);
     }
 
-    public static  Specification<Employee> hasRole(String role){
+    public static Specification<Employee> hasRole(String role){
         return (root, query, cb) ->
                 role == null ? null : cb.equal(root.get("role"),  role);
     }
 
-    public static  Specification<Employee> hasJoinDate(Date joinDate){
+    public static Specification<Employee> hasJoinDate(Date joinDate){
         return (root, query, cb) ->
-                joinDate == null ? null : cb.equal(root.get("joindate"), joinDate);
+                joinDate == null ? null : cb.equal(root.get("joinDate"), joinDate);
     }
 
-    public static  Specification<Employee> hasId(Long Id){
+    public static Specification<Employee> hasId(Long Id){
         return (root, query, cb) ->
-                Id == null ? null : cb.equal(root.get("Id"), Id);
+                Id == null ? null : cb.equal(root.get("id"), Id);
     }
-
-
-
 }

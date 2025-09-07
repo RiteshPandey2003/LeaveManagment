@@ -5,6 +5,8 @@ import com.example.Leave.Managment.entity.tables.Employee;
 import com.example.Leave.Managment.repository.EmployeeRepository;
 import com.example.Leave.Managment.utility.EmployeeSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -23,6 +25,7 @@ public class EmployeeService {
     private EmployeeRepository empRepo;
 
    //put employees
+   @CachePut(value = "employees", key = "#result.id")
     public EmployeeDTO postEmployee(EmployeeDTO empDto) {
         // DTO → Entity
         Employee employee = new Employee();
@@ -46,29 +49,37 @@ public class EmployeeService {
         );
     }
 
-    //get all employees
-    public List<EmployeeDTO> getAllEmployees(int pageNo, int pageSize, Sort sort,Long id, String name, String email, String department, String role, Date joinDate) {
+//    @Cacheable(value = "employees") dont use cache for that much data
+    public List<EmployeeDTO> getAllEmployees(int pageNo, int pageSize, Sort sort,
+                                             Long id, String name, String email,
+                                             String department, String role, Date joinDate) {
+
         Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
 
         Specification<Employee> spec = Specification.allOf(
                 EmployeeSpecification.hasId(id),
                 EmployeeSpecification.hasName(name),
-                EmployeeSpecification.hasDepartment(department),
                 EmployeeSpecification.hasEmail(email),
+                EmployeeSpecification.hasDepartment(department),
                 EmployeeSpecification.hasRole(role),
-                EmployeeSpecification.hasJoinDate(joinDate));
+                EmployeeSpecification.hasJoinDate(joinDate)
+        );
 
-        return empRepo.findAll(spec,pageable).stream().map(emp -> new EmployeeDTO(
-                emp.getId(),
-                emp.getName(),
-                emp.getEmail(),
-                emp.getDepartment(),
-                emp.getRole(),
-                emp.getJoinDate()
-        )).collect(Collectors.toList());
+
+        return empRepo.findAll(spec, pageable)
+                .stream()
+                .map(emp -> new EmployeeDTO(
+                        emp.getId(),
+                        emp.getName(),
+                        emp.getEmail(),
+                        emp.getDepartment(),
+                        emp.getRole(),
+                        emp.getJoinDate()
+                ))
+                .collect(Collectors.toList());
     }
 
-
+    @Cacheable(value = "employees", key = "#id")
     public EmployeeDTO singleEmployee(Long id) {
         return  empRepo.findById(id).map(emp -> new EmployeeDTO(
                 emp.getId(),
@@ -81,7 +92,7 @@ public class EmployeeService {
     }
 
 
-    //update
+    @CachePut(value = "employees", key = "#dto.id")
     public EmployeeDTO updateEmployee(Long id, EmployeeDTO empdto) {
         return empRepo.findById(id).map(emp -> {
             emp.setName(empdto.getName());
