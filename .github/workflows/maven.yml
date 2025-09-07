@@ -10,14 +10,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # Environment variables used by Spring Boot during the job (override application.properties)
     env:
       SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/leave_managment?useSSL=false&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: 03@March$2025
       SPRING_REDIS_HOST: 127.0.0.1
       SPRING_REDIS_PORT: 6379
-      # If you do not want to use a Redis password in CI, leave blank (''), otherwise set the password
       SPRING_REDIS_PASSWORD: ''
 
     services:
@@ -28,7 +26,6 @@ jobs:
           MYSQL_DATABASE: leave_managment
         ports:
           - 3306:3306
-        # health check so runner waits for container health
         options: >-
           --health-cmd="mysqladmin ping -h 127.0.0.1 -P 3306 --silent"
           --health-interval=10s
@@ -39,7 +36,6 @@ jobs:
         image: redis:7
         ports:
           - 6379:6379
-        # Simple health check for redis
         options: >-
           --health-cmd="redis-cli ping"
           --health-interval=5s
@@ -56,17 +52,17 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Install MySQL client & redis tools (for readiness checks)
+      - name: Install MySQL & Redis clients
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y default-mysql-client redis-tools netcat
+          sudo apt-get install -y default-mysql-client redis-tools netcat-openbsd
 
       - name: Wait for MySQL to be ready
         run: |
           echo "Waiting for MySQL..."
           for i in {1..30}; do
             if mysqladmin ping -h 127.0.0.1 -P 3306 -u root -p"$SPRING_DATASOURCE_PASSWORD" --silent; then
-              echo "MySQL is up"
+              echo "✅ MySQL is up"
               break
             fi
             echo "MySQL not ready yet... ($i)"
@@ -78,7 +74,7 @@ jobs:
           echo "Waiting for Redis..."
           for i in {1..30}; do
             if redis-cli -h 127.0.0.1 -p 6379 ping | grep -q PONG; then
-              echo "Redis is up"
+              echo "✅ Redis is up"
               break
             fi
             echo "Redis not ready yet... ($i)"
