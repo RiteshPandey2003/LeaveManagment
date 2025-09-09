@@ -12,7 +12,12 @@ import com.example.Leave.Managment.repository.LeaveRequestRepository;
 import com.example.Leave.Managment.repository.LeaveTypeRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import com.example.Leave.Managment.utility.LeaveRequestSpecification;
 
 import java.util.Date;
 import java.util.List;
@@ -168,5 +173,39 @@ public class LeaveRequestService {
 
         leaveRequestRepository.save(leaveRequest);
         return "Leave status updated to " + newStatus;
+    }
+
+    public List<LeaveRequestDTO> getAllLeaveRequests(int pageNo, int pageSize, Sort sort, String name, String applyLeaveType) {
+        Pageable pageable = PageRequest.of(pageNo,pageSize,sort);
+
+        Specification<LeaveRequest> spec = Specification.allOf(
+                LeaveRequestSpecification.hasEmployeeName(name),
+                LeaveRequestSpecification.hasLeaveTypeName(applyLeaveType)
+        );
+
+        return leaveRequestRepository.findAll(spec,pageable)
+                .stream()
+                .map(req -> new LeaveRequestDTO(
+                        req.getRequestId(),
+                        new EmployeeDTO(
+                                req.getEmployee().getId(),
+                                req.getEmployee().getName(),
+                                req.getEmployee().getEmail(),
+                                req.getEmployee().getDepartment(),
+                                req.getEmployee().getRole(),
+                                req.getEmployee().getJoinDate()
+                        ),
+                        new LeaveTypeDTO(
+                                req.getLeaveType().getLeaveId(),
+                                req.getLeaveType().getName().name(),
+                                req.getLeaveType().getDescription(),
+                                req.getLeaveType().getMaxDays()
+                        ),
+                        req.getStartDate(),
+                        req.getEndDate(),
+                        req.getStatus().toString(),
+                        req.getAppliedOn()
+                ))
+                .collect(Collectors.toList());
     }
 }

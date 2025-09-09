@@ -3,11 +3,13 @@ package com.example.Leave.Managment.controller;
 import com.example.Leave.Managment.DTO.LeaveRequestDTO;
 import com.example.Leave.Managment.service.LeaveRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -50,5 +52,28 @@ public class LeaveRequestController {
 
         String response = leaveRequestService.updateLeaveStatus(requestId, status, role);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/getRequest")
+    public ResponseEntity<List<LeaveRequestDTO>> getAllLeaveRequest(@RequestParam(defaultValue = "0") int PageNo,
+                                                              @RequestParam(defaultValue = "15") int PageSize,
+                                                              @RequestParam(defaultValue = "true") boolean ascending,
+                                                              @RequestParam(defaultValue = "requestId") String sortedBy,
+                                                              @RequestParam(required = false) String name,
+                                                              @RequestParam(required = false) String applyLeaveType){
+
+
+        Sort sort = ascending  ? Sort.by(sortedBy).ascending() : Sort.by(sortedBy).descending();
+        try{
+            List<LeaveRequestDTO> result = leaveRequestService.getAllLeaveRequests(PageNo, PageSize,sort, name, applyLeaveType);
+            if(result.isEmpty()){
+                return ResponseEntity.noContent().build();
+            }
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
     }
 }
