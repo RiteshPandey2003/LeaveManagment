@@ -1,7 +1,10 @@
 package com.example.Leave.Managment.service;
 
+import com.example.Leave.Managment.DTO.AllLeaveByEmployeeDTO;
 import com.example.Leave.Managment.DTO.EmployeeDTO;
 import com.example.Leave.Managment.entity.tables.Employee;
+import com.example.Leave.Managment.entity.tables.LeaveBalance;
+import com.example.Leave.Managment.entity.tables.LeaveRequest;
 import com.example.Leave.Managment.repository.EmployeeRepository;
 import com.example.Leave.Managment.utility.EmployeeSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +16,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -110,5 +115,28 @@ public class EmployeeService {
                     saved.getJoinDate()
             );
         }).orElse(null);
+    }
+
+    public List<AllLeaveByEmployeeDTO> getEmployeeLeaveByName(Long id) {
+        List<Object[]> result = empRepo.findRequestsWithBalances(id);
+
+        List<AllLeaveByEmployeeDTO> dtoList = new ArrayList<>();
+
+        for (Object[] row : result) {
+            LeaveRequest request = (LeaveRequest) row[0];
+            LeaveBalance balance = (LeaveBalance) row[1];
+
+            AllLeaveByEmployeeDTO dto = new AllLeaveByEmployeeDTO();
+            dto.setName(request.getEmployee().getName());
+
+            HashMap<String, Integer> map = new HashMap<>();
+            map.put(String.valueOf(request.getLeaveType().getName()),
+                    balance != null ? balance.getremainingDays() : 0);
+
+            dto.setMap(map);
+            dtoList.add(dto);
+        }
+
+        return dtoList;
     }
 }

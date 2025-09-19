@@ -1,5 +1,6 @@
 package com.example.Leave.Managment.controller;
 
+import com.example.Leave.Managment.DTO.AllLeaveByEmployeeDTO;
 import com.example.Leave.Managment.DTO.EmployeeDTO;
 import com.example.Leave.Managment.service.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +9,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -80,6 +80,19 @@ public class EmployeeController {
             }
             return ResponseEntity.ok(emp);
         }catch(Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/getEmployeeLeaveByName/{id}")
+    public ResponseEntity<List<AllLeaveByEmployeeDTO>> getEmployeeLeaveByName(@PathVariable Long id){
+        try {
+            List<AllLeaveByEmployeeDTO> dtoList = employeeService.getEmployeeLeaveByName(id);
+            if (dtoList.isEmpty()) {
+                return ResponseEntity.noContent().build();
+            }
+            return ResponseEntity.ok(dtoList);
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

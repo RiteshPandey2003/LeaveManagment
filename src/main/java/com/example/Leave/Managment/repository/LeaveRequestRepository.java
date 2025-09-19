@@ -19,7 +19,7 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
             "ON r.employee.id = b.employee.id " +
 //            "AND r.leaveType.leaveId = b.leaveType.leaveId " +
             "WHERE r.employee.id = :employeeId")
-    List<Object[]> findRequestsWithBalance(Long employeeId);
+    List<Object[]> findRequestsWithBalance(Long employeeId); // without using java relationship
 
     List<LeaveRequest> findByEmployee_Id(Long employeeId);
 
